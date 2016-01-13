@@ -76,7 +76,6 @@ cats = {'Gossiping': 'https://www.ptt.cc/bbs/Gossiping/index10308.html',
         }
 
 for cat in cats:
-    raw_input()
     count = 0
     url = cats[cat]
     while count <= 1000:

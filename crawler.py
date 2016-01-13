@@ -10,7 +10,7 @@ client = MongoClient()
 db = client.ptt
 
 
-def get_one_article(url,cat):
+def get_one_article(url, cat):
     content = urllib2.urlopen(url)
     soup = BeautifulSoup(content, 'lxml')
 
@@ -22,7 +22,7 @@ def get_one_article(url,cat):
         print title
     except:
         print 'article error', url
-        return
+        return False
 
     lines = soup.find('div', class_='bbs-screen bbs-content')
     content = ''
@@ -41,6 +41,7 @@ def get_one_article(url,cat):
     article = {'time': time, 'title': title, 'content': content, 'pushes': pushes, 'class': cat}
     articles = db.articles
     articles.insert_one(article)
+    return True
 
 
 def get_onepage_live_url(url):
@@ -63,8 +64,8 @@ def next_page(url):
     return 'https://www.ptt.cc/'+nextbtn['href']
 
 
-cats = {'Gossiping': 'https://www.ptt.cc/bbs/Gossiping/index10308.html',
-        'LoL': ' https://www.ptt.cc/bbs/LoL/index4047.html',
+
+cats =  {'LoL': ' https://www.ptt.cc/bbs/LoL/index4047.html',
         'NBA': 'https://www.ptt.cc/bbs/NBA/index3444.html',
         'Baseball': 'https://www.ptt.cc/bbs/Baseball/index4491.html',
         'WomenTalk': 'https://www.ptt.cc/bbs/WomenTalk/index4274.html',
@@ -75,6 +76,7 @@ cats = {'Gossiping': 'https://www.ptt.cc/bbs/Gossiping/index10308.html',
         'HatePolitics': 'https://www.ptt.cc/bbs/HatePolitics/index3572.html'
         }
 
+# 'Gossiping': 'https://www.ptt.cc/bbs/Gossiping/index10308.html',
 for cat in cats:
     count = 0
     url = cats[cat]
@@ -89,12 +91,15 @@ for cat in cats:
                 print 'except1 ', url
                 continue
         for link in urls:
-            while True:
+            while True and count <= 1000:
                 try:
-                    get_one_article(link,cat)
-                    count += 1
+                    print count, cat
+                    if get_one_article(link, cat):
+                        count += 1
                     break
                 except urllib2.HTTPError, err:
-                    print 'except2 ', link
+                    if err =='HTTP Error 404: Not Found':
+                        break
+                    print 'except2 ',err , link
                     t = random.randint(1, 5)
                     time.sleep(t)

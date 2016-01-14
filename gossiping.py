@@ -2,17 +2,25 @@
 from bs4 import BeautifulSoup
 import urllib2
 from pymongo import MongoClient
-# import re
+import re
 import time
 import random
+import cookielib
 
 client = MongoClient()
 db = client.ptt
 
 
-def get_one_article(url,cat):
-    content = urllib2.urlopen(url)
+def get_one_article(url, cat):
+    _cookset='over18=1; __utma=156441338.319066453.1448507855.1448507855.1448507855.1; __utmc=156441338; __utmz=156441338.1448507855.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)'
+    _Opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookielib.CookieJar()))
+    _Opener.addheaders = [('Cookie', _cookset)]
+    request=_Opener.open(url)
+    content = request.read()
+
+    #content = urllib2.urlopen(url)
     soup = BeautifulSoup(content, 'lxml')
+
 
     try:
         time_tag = soup.find('span', class_="article-meta-tag", text='時間')
@@ -22,7 +30,7 @@ def get_one_article(url,cat):
         print title
     except:
         print 'article error', url
-        return
+        return False
 
     lines = soup.find('div', class_='bbs-screen bbs-content')
     content = ''
@@ -41,10 +49,16 @@ def get_one_article(url,cat):
     article = {'time': time, 'title': title, 'content': content, 'pushes': pushes, 'class': cat}
     articles = db.articles
     articles.insert_one(article)
+    return True
 
 
 def get_onepage_live_url(url):
-    content = urllib2.urlopen(url)
+    _cookset='over18=1; __utma=156441338.319066453.1448507855.1448507855.1448507855.1; __utmc=156441338; __utmz=156441338.1448507855.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)'
+    _Opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookielib.CookieJar()))
+    _Opener.addheaders = [('Cookie', _cookset)]
+    request=_Opener.open(url)
+    content = request.read()
+    #content = urllib2.urlopen(url)
     soup = BeautifulSoup(content, 'lxml')
     blocks = soup.find_all('div', class_='r-ent')
     urls = []
@@ -57,23 +71,21 @@ def get_onepage_live_url(url):
 
 
 def next_page(url):
-    content = urllib2.urlopen(url)
+    _cookset='over18=1; __utma=156441338.319066453.1448507855.1448507855.1448507855.1; __utmc=156441338; __utmz=156441338.1448507855.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)'
+    _Opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookielib.CookieJar()))
+    _Opener.addheaders = [('Cookie', _cookset)]
+    request=_Opener.open(url)
+    content = request.read()
+    #content = urllib2.urlopen(url)
     soup = BeautifulSoup(content, 'lxml')
-    print soup
     nextbtn = soup.find('a', text='‹ 上頁')
     return 'https://www.ptt.cc/'+nextbtn['href']
 
 
-cats = {       'LoL': ' https://www.ptt.cc/bbs/LoL/index4047.html',
-                'NBA': 'https://www.ptt.cc/bbs/NBA/index3444.html',
-                'Baseball': 'https://www.ptt.cc/bbs/Baseball/index4491.html',
-                'WomenTalk': 'https://www.ptt.cc/bbs/WomenTalk/index4274.html',
-                'C_Chat': 'https://www.ptt.cc/bbs/C_Chat/index4665.html',
-                'e_shopping': 'https://www.ptt.cc/bbs/e-shopping/index2896.html',
-                'Stock': 'https://www.ptt.cc/bbs/Stock/index2799.html',
-                'joke': 'https://www.ptt.cc/bbs/joke/index3268.html',
-                'HatePolitics': 'https://www.ptt.cc/bbs/HatePolitics/index3572.html'
-                }
+
+
+cats =  {'Gossiping':'https://www.ptt.cc/bbs/Gossiping/index10306.html'}
+
 
 for cat in cats:
     count = 0
@@ -86,15 +98,14 @@ for cat in cats:
                 break
             except urllib2.HTTPError as err:
                 time.sleep(1)
-                if err.code() == 404:
-                    print '404'
                 print 'except1 ',err , url
                 continue
         for link in urls:
-            while True:
+            while True and count <= 1000:
                 try:
-                    get_one_article(link,cat)
-                    count += 1
+                    print count, cat
+                    if get_one_article(link, cat):
+                        count += 1
                     break
                 except urllib2.HTTPError as err:
                     if err.code == 404:

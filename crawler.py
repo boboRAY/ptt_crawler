@@ -59,7 +59,6 @@ def get_onepage_live_url(url):
 def next_page(url):
     content = urllib2.urlopen(url)
     soup = BeautifulSoup(content, 'lxml')
-    print soup
     nextbtn = soup.find('a', text='‹ 上頁')
     return 'https://www.ptt.cc/'+nextbtn['href']
 
@@ -86,7 +85,7 @@ for cat in cats:
                 break
             except urllib2.HTTPError as err:
                 time.sleep(1)
-                if err.code() == 404:
+                if err.code == 404:
                     print '404'
                 print 'except1 ',err , url
                 continue

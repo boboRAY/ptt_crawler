@@ -4,7 +4,6 @@
 Python 2.7.10
 
 ##Pre-Require
-在終端機打
 `pip install pymongo`
 
 ##how to use
@@ -14,7 +13,7 @@ Python 2.7.10
 from pymongo import MongoClient
 #first import pymongo
 
-client = MongoClient('140.112.107.119', 22222) #connect to db server 裡面變數不要改
+client = MongoClient("server_ip") #connect to db server 裡面變數不要改
 db = client.ptt #使用 ptt table
 
 #以上就照抄就好，這樣才能使用正確的 DB
